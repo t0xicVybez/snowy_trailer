@@ -19,7 +19,7 @@ To create a trailer, use the following export in your script:
 exports.snowy_trailer:CreateTrailer(position)
 ```
 - `position`: A vector4 or table containing the x, y, z, w coordinates where the trailer should be spawned.
-
+- returns the trailer entity.
 ## Configuration
 
 ### Debugging

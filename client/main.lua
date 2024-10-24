@@ -126,6 +126,7 @@ function SpawnTrailer(position)
             end
         },
     })
+    return State.trailer
 end
 exports('CreateTrailer', SpawnTrailer)
 -- Function to take rope from trailer
