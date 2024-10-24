@@ -4,7 +4,7 @@ AddStateBagChangeHandler('towing_rope', nil, function(bagName, key, value)
     if Config.Debug then
         lib.print.warn("statebag change", key, value)
     end
-    local entity = GetEntityFromStateBagName(bagName)
+    local entity = lib.waitFor(GetEntityFromStateBagName(bagName), nil, 5000)
     if not entity then return end
     
     if value then
@@ -87,7 +87,7 @@ end)
 
 ---@description Handles the rope in hand syncing..
 AddStateBagChangeHandler('ropeHolder', nil, function(bagName, key, value)
-    local entity = GetEntityFromStateBagName(bagName)
+    local entity = lib.waitFor(GetEntityFromStateBagName(bagName), nil, 5000)
     if not entity then return end
 
     State.ropeInitiator = value
@@ -167,7 +167,7 @@ end)
 ---@description Handles the vehicle to trailer syncing.
 AddStateBagChangeHandler('setVehicle', nil, function(bagName, key, value)
     if value then
-        AttachRopeToVehicle(GetEntityFromStateBagName(bagName))
+        AttachRopeToVehicle(lib.waitFor(GetEntityFromStateBagName(bagName), nil, 5000))
     end
 end)
 

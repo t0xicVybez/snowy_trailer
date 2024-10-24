@@ -56,11 +56,8 @@ end
 ---@description Spawns a trailer at the given position.
 ---@param position any
 function SpawnTrailer(position)
-    local trailerHash = GetHashKey('tr2')
-    RequestModel(trailerHash)
-    while not HasModelLoaded(trailerHash) do
-        Wait(0)
-    end
+    local trailerHash = 'tr2'
+    lib.requestModel(trailerHash, 5000)
     
     State.trailer = CreateVehicle(trailerHash, position.x, position.y, position.z, position.w, true, false)
     SetEntityAsMissionEntity(State.trailer, true, true)
@@ -126,6 +123,7 @@ function SpawnTrailer(position)
             end
         },
     })
+    SetModelAsNoLongerNeeded(trailerHash)
     return State.trailer
 end
 exports('CreateTrailer', SpawnTrailer)
@@ -179,14 +177,14 @@ end
 ---@description The function that handles rope taking.
 function TakeRope()
     -- Set ourselves as the rope initiator
-    State.ropeInitiator = GetPlayerServerId(PlayerId())
+    State.ropeInitiator = cache.serverId
     
     -- Set the state bag on the trailer to track who has the rope
     Entity(State.trailer).state:set('ropeHolder', State.ropeInitiator, true)
     
     -- Only create the invisible item and rope if we're the initiator
-    if State.ropeInitiator == GetPlayerServerId(PlayerId()) then
-        local playerPed = PlayerPedId()
+    if State.ropeInitiator == cache.serverId then
+        local playerPed = cache.ped
         local playerLeftHandBone = GetPedBoneIndex(playerPed, 18905)
         local playerLeftHandBonePos = GetWorldPositionOfEntityBone(playerPed, playerLeftHandBone)
         
@@ -196,10 +194,7 @@ function TakeRope()
         end
         
         -- Create and attach invisible item
-        RequestModel(`prop_tequila_bottle`)
-        while not HasModelLoaded(`prop_tequila_bottle`) do
-            Wait(0)
-        end
+        lib.requestModel('prop_tequila_bottle', 5000)
         
         State.invisibleItem = CreateObject(`prop_tequila_bottle`, playerLeftHandBonePos.x, playerLeftHandBonePos.y, playerLeftHandBonePos.z, true, true, true)
         SetEntityVisible(State.invisibleItem, false, 0)
@@ -212,6 +207,7 @@ function TakeRope()
         AttachEntityToEntity(State.invisibleItem, playerPed, playerLeftHandBone, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, true, true, false, true, 1, true)
         Entity(State.invisibleItem).state:set("connectedToTrailer", true, true)
         Entity(State.trailer).state:set("connectedToInvisibleItem", true, true)
+        SetModelAsNoLongerNeeded('prop_tequila_bottle')
         -- Create the rope
     end
     
@@ -238,7 +234,7 @@ function CreateVehicleTargetOptions()
 end
 ---@description Returns the rope to the trailer.
 function ReturnRope()
-    if State.ropeInitiator == GetPlayerServerId(PlayerId()) then
+    if State.ropeInitiator == cache.serverId then
         ResetRopeState()
     end
     exports.ox_target:removeGlobalVehicle({'attach_rope_to_vehicle'})
@@ -247,7 +243,7 @@ end
 ---@description Detaches the rope from the vehicle.
 function DetachRope()
     if not State.attachedVehicle then return end
-    if State.ropeInitiator == GetPlayerServerId(PlayerId()) then
+    if State.ropeInitiator == cache.serverId then
         TakeRope()
         ReturnRope()
         RemoveSyncedRope(State.attachedVehicle)
@@ -261,8 +257,8 @@ end
 ---@description Command to spawn them setup when debug is enabled
 if Config.Debug then
     RegisterCommand('spawntowtruck', function()
-        local playerPos = GetEntityCoords(PlayerPedId())
-        SpawnTrailer(vector4(playerPos.x+5.0, playerPos.y+2.0, playerPos.z, GetEntityHeading(PlayerPedId())))
+        local playerPos = GetEntityCoords(cache.ped)
+        SpawnTrailer(vector4(playerPos.x+5.0, playerPos.y+2.0, playerPos.z, GetEntityHeading(cache.ped)))
         lib.notify({
             title = 'Success',
             description = 'Vehicles spawned successfully',
@@ -316,7 +312,7 @@ function GetClosestVehicleBumper(vehicle)
     if not vehicle then return nil end
     
     -- Get player position
-    local playerPos = GetEntityCoords(PlayerPedId())
+    local playerPos = GetEntityCoords(cache.ped)
     
     -- Get vehicle bone positions
     local frontBoneIndex = GetEntityBoneIndexByName(vehicle, 'bumper_f')
