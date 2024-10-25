@@ -4,12 +4,7 @@ AddStateBagChangeHandler('towing_rope', nil, function(bagName, key, value)
     if Config.Debug then
         lib.print.warn("statebag change", key, value)
     end
-    local entity = lib.waitFor(function()
-        entity = GetEntityFromStateBagName(bagname)
-        if entity ~= 0 then
-            return true
-        end
-    end, ("Entity (%s) took too long to exist"):format(bagname), 10000)
+    local entity = GetEntityFromStateBagName(bagName)
     if not entity then return end
     
     if value then
@@ -92,12 +87,7 @@ end)
 
 ---@description Handles the rope in hand syncing..
 AddStateBagChangeHandler('ropeHolder', nil, function(bagName, key, value)
-    local entity = lib.waitFor(function()
-        entity = GetEntityFromStateBagName(bagname)
-        if entity ~= 0 then
-            return true
-        end
-    end, ("Entity (%s) took too long to exist"):format(bagname), 10000)
+    local entity = GetEntityFromStateBagName(bagName)
     if not entity then return end
 
     State.ropeInitiator = value
@@ -136,12 +126,7 @@ AddStateBagChangeHandler('secondaryRampOpen', nil, function(bagName, key, value)
     if Config.Debug then
         lib.print.warn("statebag change", key, value)
     end
-    local trailer = lib.waitFor(function()
-        entity = GetEntityFromStateBagName(bagname)
-        if entity ~= 0 then
-            return true
-        end
-    end, ("Entity (%s) took too long to exist"):format(bagname), 10000)
+    local trailer = GetEntityFromStateBagName(bagName)
     State.isSecondRampDown = value  -- Corrected logic
     if value then
         SetVehicleDoorOpen(trailer, 4, false, false)
@@ -156,12 +141,7 @@ AddStateBagChangeHandler('connectedToTrailer', nil, function(bagName, key, value
         lib.print.warn("statebag change", key, value)
     end
     if value then
-        State.invisibleItem = lib.waitFor(function()
-            entity = GetEntityFromStateBagName(bagname)
-            if entity ~= 0 then
-                return true
-            end
-        end, ("Entity (%s) took too long to exist"):format(bagname), 10000)
+        State.invisibleItem = GetEntityFromStateBagName(bagName)
         State.invisibleItemPos = GetEntityCoords(State.invisibleItem)
     else
         State.invisibleItem = nil
@@ -175,12 +155,7 @@ AddStateBagChangeHandler('connectedToInvisibleItem', nil, function(bagName, key,
         lib.print.warn("statebag change", key, value)
     end
     Wait(1000)
-    State.trailer = lib.waitFor(function()
-        entity = GetEntityFromStateBagName(bagname)
-        if entity ~= 0 then
-            return true
-        end
-    end, ("Entity (%s) took too long to exist"):format(bagname), 10000)
+    State.trailer = GetEntityFromStateBagName(bagName)
     if value then
         TakeRopeActually()
     else
@@ -192,15 +167,9 @@ end)
 ---@description Handles the vehicle to trailer syncing.
 AddStateBagChangeHandler('setVehicle', nil, function(bagName, key, value)
     if value then
-        AttachRopeToVehicle(lib.waitFor(function()
-            entity = GetEntityFromStateBagName(bagname)
-            if entity ~= 0 then
-                return true
-            end
-        end, ("Entity (%s) took too long to exist"):format(bagname), 10000))
+        AttachRopeToVehicle(GetEntityFromStateBagName(bagName))
     end
 end)
-
 
 
 
