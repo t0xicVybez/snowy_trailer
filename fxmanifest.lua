@@ -1,14 +1,14 @@
-fx_version  'cerulean'
-game        'gta5'
-lua54       'yes'
+fx_version 'cerulean'
+game 'gta5'
+lua54 'yes'
 
-name        'Snowy Trailer'
-description 'towing stuff.'
-author      'Snowylol'
-version     '0.0.1'
+name 'Snowy Trailer'
+description 'Towing stuff.'
+author 'Snowylol'
+version '0.0.1'
 
 shared_scripts {
-    '@ox_lib/init.lua',
+    '@ox_lib/init.lua'
 }
 
 client_scripts {
@@ -19,5 +19,5 @@ client_scripts {
 
 dependencies {
     'ox_lib',
-    'ox_target',
+    'ox_target'
 }
