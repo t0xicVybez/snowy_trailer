@@ -1,6 +1,7 @@
+-- statebags.lua
+local Config = require 'configs.client'
 
----@description handles the vehicle to trailer rope syncing.
-AddStateBagChangeHandler('towing_rope', nil, function(bagName, key, value)
+local function HandleTowingRopeSync(bagName, key, value)
     if Config.Debug then
         lib.print.warn("statebag change", key, value)
     end
@@ -13,10 +14,9 @@ AddStateBagChangeHandler('towing_rope', nil, function(bagName, key, value)
         
         if not DoesEntityExist(vehicle) or not DoesEntityExist(trailer) then return end
         
-        -- Wait for a second to ensure the vehicle is in the correct position
         Wait(1000)
         
-        -- Delete any existing rope first
+        -- Clean up any existing ropes
         if State.rope then
             DeleteRope(State.rope)
             State.rope = nil
@@ -26,19 +26,17 @@ AddStateBagChangeHandler('towing_rope', nil, function(bagName, key, value)
             State.activeRopes[vehicle] = nil
         end
         
-        -- Get bone positions
         local trailerBoneIndex = GetEntityBoneIndexByName(trailer, 'attach_male')
         local vehicleBoneIndex = GetEntityBoneIndexByName(vehicle, 'engine')
         
         if not trailerBoneIndex or not vehicleBoneIndex then return end
         
-        -- Calculate height offset based on ramp states
         local heightOffset = value.heightOffset
         local trailerPos = GetWorldPositionOfEntityBone(trailer, trailerBoneIndex)
         trailerPos = vector3(trailerPos.x, trailerPos.y, trailerPos.z + heightOffset)
         local vehiclePos = GetWorldPositionOfEntityBone(vehicle, vehicleBoneIndex)
         local distance = #(trailerPos - vehiclePos)
-        -- Load rope textures
+        
         if not RopeAreTexturesLoaded() then
             RopeLoadTextures()
             while not RopeAreTexturesLoaded() do
@@ -46,7 +44,6 @@ AddStateBagChangeHandler('towing_rope', nil, function(bagName, key, value)
             end
         end
         
-        -- Create new rope
         local ropeLength = distance + 0.5
         local rope = AddRope(
             trailerPos.x, trailerPos.y, trailerPos.z,
@@ -63,7 +60,6 @@ AddStateBagChangeHandler('towing_rope', nil, function(bagName, key, value)
             true
         )
         
-        -- Attach rope ends using the calculated positions
         AttachEntitiesToRope(rope, 
             trailer, vehicle,
             trailerPos.x, trailerPos.y, trailerPos.z,
@@ -74,19 +70,16 @@ AddStateBagChangeHandler('towing_rope', nil, function(bagName, key, value)
             vehicleBoneIndex
         )
         State.rope = rope
-        -- Store rope reference
         State.activeRopes[vehicle] = rope
     else
-        -- Clean up rope if it exists
         if State.activeRopes[entity] then
             DeleteRope(State.activeRopes[entity])
             State.activeRopes[entity] = nil
         end
     end
-end)
+end
 
----@description Handles the rope in hand syncing..
-AddStateBagChangeHandler('ropeHolder', nil, function(bagName, key, value)
+local function HandleRopeHolderSync(bagName, key, value)
     local entity = GetEntityFromStateBagName(bagName)
     if not entity then return end
 
@@ -101,12 +94,10 @@ AddStateBagChangeHandler('ropeHolder', nil, function(bagName, key, value)
             State.rope = nil
         end
         State.isHoldingRope = false
-        return
     end
-end)
+end
 
----@description Handles the main ramp state syncing.
-AddStateBagChangeHandler('mainRampOpen', nil, function(bagName, key, value)
+local function HandleMainRampSync(bagName, key, value)
     if Config.Debug then
         lib.print.warn("statebag change", key, value)
     end
@@ -114,29 +105,25 @@ AddStateBagChangeHandler('mainRampOpen', nil, function(bagName, key, value)
     State.isMainRampDown = value
     if value then
         SetVehicleDoorOpen(trailer, 5, false, false)
-        return
     else
         SetVehicleDoorShut(trailer, 5, false)
-        return
     end
-end)
+end
 
----@description Handles the secondary ramp state syncing.
-AddStateBagChangeHandler('secondaryRampOpen', nil, function(bagName, key, value)
+local function HandleSecondaryRampSync(bagName, key, value)
     if Config.Debug then
         lib.print.warn("statebag change", key, value)
     end
     local trailer = GetEntityFromStateBagName(bagName)
-    State.isSecondRampDown = value  -- Corrected logic
+    State.isSecondRampDown = value
     if value then
         SetVehicleDoorOpen(trailer, 4, false, false)
     else
         SetVehicleDoorShut(trailer, 4, false)
     end
-end)
+end
 
----@description Handles the invisible item to trailer  (the rope to trailer) syncing.
-AddStateBagChangeHandler('connectedToTrailer', nil, function(bagName, key, value)
+local function HandleInvisibleItemSync(bagName, key, value)
     if Config.Debug then
         lib.print.warn("statebag change", key, value)
     end
@@ -147,10 +134,9 @@ AddStateBagChangeHandler('connectedToTrailer', nil, function(bagName, key, value
         State.invisibleItem = nil
         State.invisibleItemPos = nil
     end
-end)
+end
 
----@description Handles the trailer to invisible item (the trailer to rope) syncing.
-AddStateBagChangeHandler('connectedToInvisibleItem', nil, function(bagName, key, value)
+local function HandleTrailerInvisibleItemSync(bagName, key, value)
     if Config.Debug then
         lib.print.warn("statebag change", key, value)
     end
@@ -162,14 +148,18 @@ AddStateBagChangeHandler('connectedToInvisibleItem', nil, function(bagName, key,
         DeleteRope(State.rope)
         State.rope = nil
     end
-end)
+end
 
----@description Handles the vehicle to trailer syncing.
-AddStateBagChangeHandler('setVehicle', nil, function(bagName, key, value)
+local function HandleVehicleAttachSync(bagName, key, value)
     if value then
         AttachRopeToVehicle(GetEntityFromStateBagName(bagName))
     end
-end)
+end
 
-
-
+AddStateBagChangeHandler('towing_rope', nil, HandleTowingRopeSync)
+AddStateBagChangeHandler('ropeHolder', nil, HandleRopeHolderSync)
+AddStateBagChangeHandler('mainRampOpen', nil, HandleMainRampSync)
+AddStateBagChangeHandler('secondaryRampOpen', nil, HandleSecondaryRampSync)
+AddStateBagChangeHandler('connectedToTrailer', nil, HandleInvisibleItemSync)
+AddStateBagChangeHandler('connectedToInvisibleItem', nil, HandleTrailerInvisibleItemSync)
+AddStateBagChangeHandler('setVehicle', nil, HandleVehicleAttachSync)
